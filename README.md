@@ -2,6 +2,14 @@
 
 Videogrep-style supercuts using subtitle matches refined with ASR word timings (local Whisper via `faster-whisper`).
 
+Demo. All occurances of a word "cunt" in the movie The Fafourite:
+
+
+
+https://github.com/user-attachments/assets/bcbd6e73-ffd3-40a7-93b3-81e1b082433e
+
+
+
 ## Install (uv)
 
 ```bash
