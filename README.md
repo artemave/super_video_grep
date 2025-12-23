@@ -8,7 +8,7 @@ Demo. All occurances of word "cunt" in the movie The Fafourite:
 
 https://github.com/user-attachments/assets/bcbd6e73-ffd3-40a7-93b3-81e1b082433e
 
-
+This is 100% llm code - I didn't even read it once.
 
 ## Install (uv)
 
