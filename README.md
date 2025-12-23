@@ -1,6 +1,6 @@
 # super_video_grep
 
-Videogrep-style supercuts using subtitle matches refined with ASR word timings (local Whisper via `faster-whisper`).
+[Videogrep](https://github.com/antiboredom/videogrep)-style supercuts using subtitle matches refined with ASR word timings (local Whisper via `faster-whisper`).
 
 Demo. All occurances of word "cunt" in the movie The Fafourite:
 
