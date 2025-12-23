@@ -2,7 +2,7 @@
 
 Videogrep-style supercuts using subtitle matches refined with ASR word timings (local Whisper via `faster-whisper`).
 
-Demo. All occurances of a word "cunt" in the movie The Fafourite:
+Demo. All occurances of word "cunt" in the movie The Fafourite:
 
 
 
