@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=67", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "super_video_grep"
+version = "0.1.0"
+description = "Videogrep-like tool that uses ASR timings"
+requires-python = ">=3.9"
+dependencies = [
+  "faster-whisper>=1.0.0",
+  "tqdm>=4.0.0",
+]
+
+[project.scripts]
+svgrep = "super_video_grep.cli:main"

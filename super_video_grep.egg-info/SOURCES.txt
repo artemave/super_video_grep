@@ -1,0 +1,14 @@
+README.md
+pyproject.toml
+super_video_grep/__init__.py
+super_video_grep/__main__.py
+super_video_grep/asr.py
+super_video_grep/cli.py
+super_video_grep/ffmpeg.py
+super_video_grep/segments.py
+super_video_grep.egg-info/PKG-INFO
+super_video_grep.egg-info/SOURCES.txt
+super_video_grep.egg-info/dependency_links.txt
+super_video_grep.egg-info/entry_points.txt
+super_video_grep.egg-info/requires.txt
+super_video_grep.egg-info/top_level.txt

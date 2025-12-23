@@ -1,0 +1,2 @@
+[console_scripts]
+svgrep = super_video_grep.cli:main
