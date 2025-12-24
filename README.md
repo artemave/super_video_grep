@@ -39,6 +39,7 @@ uv run svgrep "hello" input.mp4 --subtitles input.srt --print-segments
 - `--subtitle-encoding`: subtitle file encoding (default: `utf-8-sig`)
 - `--match-mode`: token match mode (`exact`, `prefix`, `substring`)
 - `--print-segments`: print matched segments and exit
+- `--timing`: print timing info for extraction and ASR
 
 ## Notes
 

@@ -71,16 +71,19 @@ def cut_clips(
 
     for idx, (start, end) in enumerate(segments, start=1):
         clip_path = out_path / f"{prefix}_{idx:03d}.mp4"
+        duration = end - start
+        if duration <= 0:
+            continue
         run_ffmpeg(
             [
                 "ffmpeg",
                 "-y",
-                "-i",
-                input_path,
                 "-ss",
                 f"{start:.3f}",
-                "-to",
-                f"{end:.3f}",
+                "-i",
+                input_path,
+                "-t",
+                f"{duration:.3f}",
                 "-c:v",
                 "libx264",
                 "-c:a",
@@ -125,3 +128,7 @@ def concat_clips(clips: List[str], output_path: str) -> None:
             output_path,
         ]
     )
+    try:
+        list_path.unlink()
+    except OSError:
+        pass

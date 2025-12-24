@@ -1,4 +1,5 @@
 import argparse
+import time
 import sys
 import tempfile
 from pathlib import Path
@@ -45,6 +46,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="print matched segments and exit",
     )
+    parser.add_argument(
+        "--timing",
+        default=True,
+        action="store_true",
+        help="print timing info for segment extraction and ASR",
+    )
     return parser
 
 
@@ -78,6 +85,12 @@ def main() -> int:
     model = build_model("small", "cpu", "int8", None)
 
     all_clips: List[str] = []
+    total_extract = 0.0
+    total_asr = 0.0
+    total_segments = 0
+    total_cut = 0.0
+    total_concat = 0.0
+    run_start = time.perf_counter()
 
     with tempfile.TemporaryDirectory() as tmpdir:
         for idx, input_path in enumerate(args.inputs, start=1):
@@ -91,12 +104,15 @@ def main() -> int:
             matched_subs = match_subtitle_segments(subs, query_tokens, match_mode=args.match_mode)
             refined: List[tuple] = []
             for seg in matched_subs:
+                total_segments += 1
                 seg_audio = str(Path(tmpdir) / f"seg_{idx:03d}_{int(seg.start)}.wav")
+                t0 = time.perf_counter()
                 try:
                     extract_audio_segment(input_path, seg_audio, seg.start, seg.end)
                 except (RuntimeError, ValueError) as exc:
                     print(f"segment audio extract failed: {exc}", file=sys.stderr)
                     continue
+                t1 = time.perf_counter()
 
                 _local_segs, local_words, local_warnings = transcribe(
                     model,
@@ -106,6 +122,19 @@ def main() -> int:
                     vad_parameters=None,
                     batch_size=1,
                 )
+                t2 = time.perf_counter()
+
+                extract_time = t1 - t0
+                asr_time = t2 - t1
+                total_extract += extract_time
+                total_asr += asr_time
+                if args.timing:
+                    print(
+                        "segment\t"
+                        f"{seg.start:.3f}\t{seg.end:.3f}\t"
+                        f"extract={extract_time:.3f}s\tasr={asr_time:.3f}s",
+                        file=sys.stderr,
+                    )
                 for warning in local_warnings:
                     print(f"warning: {warning}", file=sys.stderr)
                 local_matches = find_phrase_matches(
@@ -132,7 +161,10 @@ def main() -> int:
                 continue
 
             prefix = f"clip_{idx:03d}"
+            cut_start = time.perf_counter()
             clips = cut_clips(input_path, segments, tmpdir, prefix)
+            cut_end = time.perf_counter()
+            total_cut += cut_end - cut_start
             all_clips.extend(clips)
 
         if args.print_segments:
@@ -142,11 +174,25 @@ def main() -> int:
             print("no matches found", file=sys.stderr)
             return 2
 
+        concat_start = time.perf_counter()
         try:
             concat_clips(all_clips, args.output)
         except RuntimeError as exc:
             print(str(exc), file=sys.stderr)
             return 1
+        concat_end = time.perf_counter()
+        total_concat += concat_end - concat_start
+
+    if args.timing:
+        total_time = time.perf_counter() - run_start
+        print(
+            "timing_total\t"
+            f"segments={total_segments}\t"
+            f"extract={total_extract:.3f}s\tasr={total_asr:.3f}s\t"
+            f"cut={total_cut:.3f}s\tconcat={total_concat:.3f}s\t"
+            f"elapsed={total_time:.3f}s",
+            file=sys.stderr,
+        )
 
     return 0
 
