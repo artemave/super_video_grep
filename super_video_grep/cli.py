@@ -48,9 +48,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--timing",
+        action="store_true",
+        default=True,
+        help="print timing info for segment extraction and ASR",
+    )
+    parser.add_argument(
+        "--no-timing",
+        action="store_false",
+        dest="timing",
+        help="disable timing output",
+    )
+    parser.add_argument(
+        "--counter",
         default=True,
         action="store_true",
-        help="print timing info for segment extraction and ASR",
+        help="overlay a running match counter on each clip",
     )
     return parser
 
@@ -162,7 +174,8 @@ def main() -> int:
 
             prefix = f"clip_{idx:03d}"
             cut_start = time.perf_counter()
-            clips = cut_clips(input_path, segments, tmpdir, prefix)
+            counter_total = len(segments) if args.counter else None
+            clips = cut_clips(input_path, segments, tmpdir, prefix, counter_total)
             cut_end = time.perf_counter()
             total_cut += cut_end - cut_start
             all_clips.extend(clips)

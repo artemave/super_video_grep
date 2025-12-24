@@ -1,7 +1,7 @@
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Iterable, List, Tuple
+from typing import Iterable, List, Optional, Tuple
 
 
 def ensure_ffmpeg() -> None:
@@ -65,6 +65,7 @@ def cut_clips(
     segments: Iterable[Tuple[float, float]],
     out_dir: str,
     prefix: str,
+    counter_total: Optional[int] = None,
 ) -> List[str]:
     clips: List[str] = []
     out_path = Path(out_dir)
@@ -74,6 +75,19 @@ def cut_clips(
         duration = end - start
         if duration <= 0:
             continue
+        vf_filter = None
+        if counter_total is not None:
+            text = f"{idx}"
+            text = (
+                text.replace("\\", "\\\\")
+                .replace(":", "\\:")
+                .replace("'", "\\'")
+            )
+            vf_filter = (
+                "drawtext="
+                f"text='{text}':x=24:y=24:fontsize=56:"
+                "fontcolor=white:box=1:boxcolor=black@0.5:boxborderw=6"
+            )
         run_ffmpeg(
             [
                 "ffmpeg",
@@ -84,6 +98,7 @@ def cut_clips(
                 input_path,
                 "-t",
                 f"{duration:.3f}",
+                *([] if not vf_filter else ["-vf", vf_filter]),
                 "-c:v",
                 "libx264",
                 "-c:a",
