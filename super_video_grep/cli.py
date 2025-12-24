@@ -7,7 +7,7 @@ from typing import List
 
 from .asr import build_model, transcribe
 from .ffmpeg import concat_clips, cut_clips, ensure_ffmpeg, extract_audio_segment
-from .segments import find_phrase_matches, normalize_query, pad_and_merge
+from .segments import find_any_phrase_matches, normalize_query, pad_and_merge
 from .subtitles import load_srt, match_subtitle_segments
 
 
@@ -16,8 +16,13 @@ def build_parser() -> argparse.ArgumentParser:
         prog="svgrep",
         description="Videogrep-style supercut using subtitles + ASR refinement",
     )
-    parser.add_argument("query", help="phrase to search for")
     parser.add_argument("inputs", nargs="+", help="input video file(s)")
+    parser.add_argument(
+        "--search",
+        action="append",
+        default=[],
+        help="search term (OR); provide multiple times",
+    )
     parser.add_argument("-o", "--output", default="output.mp4", help="output video path")
     parser.add_argument("--language", default=None, help="language code (optional)")
     parser.add_argument("--padding", type=float, default=0.25, help="seconds padding")
@@ -83,8 +88,13 @@ def main() -> int:
         print("only one input is supported when using subtitles", file=sys.stderr)
         return 2
 
-    query_tokens = normalize_query(args.query)
-    if not query_tokens:
+    query_strings = list(args.search or [])
+    if not query_strings:
+        print("at least one --search is required", file=sys.stderr)
+        return 2
+    query_tokens_list = [normalize_query(q) for q in query_strings]
+    query_tokens_list = [q for q in query_tokens_list if q]
+    if not query_tokens_list:
         print("query has no searchable tokens", file=sys.stderr)
         return 1
 
@@ -113,7 +123,9 @@ def main() -> int:
             except OSError as exc:
                 print(f"failed to read subtitles: {exc}", file=sys.stderr)
                 return 1
-            matched_subs = match_subtitle_segments(subs, query_tokens, match_mode=args.match_mode)
+            matched_subs = match_subtitle_segments(
+                subs, query_tokens_list, match_mode=args.match_mode
+            )
             refined: List[tuple] = []
             for seg in matched_subs:
                 total_segments += 1
@@ -149,8 +161,8 @@ def main() -> int:
                     )
                 for warning in local_warnings:
                     print(f"warning: {warning}", file=sys.stderr)
-                local_matches = find_phrase_matches(
-                    local_words, query_tokens, match_mode=args.match_mode
+                local_matches = find_any_phrase_matches(
+                    local_words, query_tokens_list, match_mode=args.match_mode
                 )
                 if local_matches:
                     for start, end in local_matches:

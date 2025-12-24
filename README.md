@@ -19,7 +19,13 @@ pip install uv
 ## Usage (uv run)
 
 ```bash
-uv run svgrep "hello world" input.mp4 --subtitles input.srt -o output.mp4
+uv run svgrep --search "hello world" input.mp4 --subtitles input.srt -o output.mp4
+```
+
+Multiple search terms (OR):
+
+```bash
+uv run svgrep --search "hello" --search "world" input.mp4 --subtitles input.srt -o output.mp4
 ```
 
 Print matched segments without rendering:
@@ -37,6 +43,7 @@ uv run svgrep "hello" input.mp4 --subtitles input.srt --print-segments
 - `--min-duration`: drop segments shorter than this
 - `--subtitles`: path to SRT file to match on subtitle text (required)
 - `--subtitle-encoding`: subtitle file encoding (default: `utf-8-sig`)
+- `--search`: search term (OR); provide multiple times (required)
 - `--match-mode`: token match mode (`exact`, `prefix`, `substring`)
 - `--print-segments`: print matched segments and exit
 - `--timing`: print timing info for extraction and ASR (default on)

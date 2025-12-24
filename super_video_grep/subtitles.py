@@ -58,12 +58,12 @@ def load_srt(path: str, encoding: str = "utf-8-sig") -> List[SubtitleSegment]:
 
 def match_subtitle_segments(
     segments: Iterable[SubtitleSegment],
-    phrase: List[str],
+    phrases: List[List[str]],
     match_mode: str,
 ) -> List[SubtitleSegment]:
     matches: List[SubtitleSegment] = []
     for seg in segments:
         tokens = normalize_query(seg.text)
-        if tokens_contain_phrase(tokens, phrase, match_mode=match_mode):
+        if any(tokens_contain_phrase(tokens, phrase, match_mode=match_mode) for phrase in phrases):
             matches.append(seg)
     return matches

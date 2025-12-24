@@ -77,6 +77,19 @@ def find_phrase_matches(
     return matches
 
 
+def find_any_phrase_matches(
+    words: List[Word],
+    phrases: List[List[str]],
+    match_mode: str = "exact",
+) -> List[Tuple[float, float]]:
+    matches: List[Tuple[float, float]] = []
+    for phrase in phrases:
+        if not phrase:
+            continue
+        matches.extend(find_phrase_matches(words, phrase, match_mode=match_mode))
+    return matches
+
+
 def tokens_contain_phrase(tokens: List[str], phrase: List[str], match_mode: str = "exact") -> bool:
     if not phrase:
         return False
