@@ -62,7 +62,7 @@ uv run svgrep "hello" input.mp4 --subtitles input.srt --print-segments
 - `--print-segments`: print matched segments and exit
 - `--timing`: print timing info for extraction and ASR (default on)
 - `--no-timing`: disable timing output
-- `--counter`: overlay a running match counter (1, 2, 3, …) on each clip
+- `--counter`: overlay a running match counter (counts total matched words, even if a clip has multiple matches)
 
 ## Notes
 

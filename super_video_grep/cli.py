@@ -212,6 +212,15 @@ def main() -> int:
                 merge_gap=args.merge_gap,
                 min_duration=args.min_duration,
             )
+            counter_counts = None
+            if args.counter and segments:
+                counter_counts = []
+                for seg_start, seg_end in segments:
+                    count = 0
+                    for m_start, m_end in raw_matches:
+                        if m_end >= seg_start and m_start <= seg_end:
+                            count += 1
+                    counter_counts.append(count)
 
             if args.print_segments:
                 _print_segments(segments, input_path)
@@ -223,12 +232,14 @@ def main() -> int:
             prefix = f"clip_{idx:03d}"
             cut_start = time.perf_counter()
             counter_start = counter_index if args.counter else None
-            clips = cut_clips(input_path, segments, tmpdir, prefix, counter_start)
+            clips = cut_clips(
+                input_path, segments, tmpdir, prefix, counter_start, counter_counts
+            )
             cut_end = time.perf_counter()
             total_cut += cut_end - cut_start
             all_clips.extend(clips)
             if args.counter:
-                counter_index += len(clips)
+                counter_index += sum(counter_counts or [])
 
         if args.print_segments:
             return 0

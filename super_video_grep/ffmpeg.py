@@ -77,6 +77,7 @@ def cut_clips(
     out_dir: str,
     prefix: str,
     counter_start: Optional[int] = None,
+    counter_counts: Optional[List[int]] = None,
 ) -> List[str]:
     clips: List[str] = []
     out_path = Path(out_dir)
@@ -89,7 +90,10 @@ def cut_clips(
             continue
         vf_filter = None
         if counter_start is not None:
-            counter_index += 1
+            increment = 1
+            if counter_counts is not None and idx - 1 < len(counter_counts):
+                increment = counter_counts[idx - 1]
+            counter_index += increment
             text = f"{counter_index}"
             text = (
                 text.replace("\\", "\\\\")
