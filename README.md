@@ -42,7 +42,7 @@ uv run svgrep "hello" input.mp4 --subtitles input.srt --print-segments
 - `--merge-gap`: merge segments if gap is within this many seconds
 - `--min-duration`: drop segments shorter than this
 - `--subtitles`: path to SRT file to match on subtitle text (required)
-- `--subtitle-encoding`: subtitle file encoding (default: `utf-8-sig`)
+- `--subtitle-encoding`: subtitle file encoding (default: `auto`)
 - `--search`: search term (OR); provide multiple times (required)
 - `--match-mode`: token match mode (`exact`, `prefix`, `substring`)
 - `--print-segments`: print matched segments and exit

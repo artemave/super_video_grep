@@ -37,8 +37,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--subtitle-encoding",
-        default="utf-8-sig",
-        help="subtitle encoding (default: utf-8-sig)",
+        default="auto",
+        help="subtitle encoding (default: auto)",
     )
     parser.add_argument(
         "--match-mode",
@@ -126,6 +126,7 @@ def main() -> int:
             matched_subs = match_subtitle_segments(
                 subs, query_tokens_list, match_mode=args.match_mode
             )
+            print(f"found {len(matched_subs)} matching subtitle segments", file=sys.stderr)
             refined: List[tuple] = []
             for seg in matched_subs:
                 total_segments += 1

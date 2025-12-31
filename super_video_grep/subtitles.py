@@ -1,4 +1,5 @@
 import re
+import codecs
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List
@@ -34,8 +35,32 @@ def _clean_text(text: str) -> str:
     return text
 
 
-def load_srt(path: str, encoding: str = "utf-8-sig") -> List[SubtitleSegment]:
-    data = Path(path).read_text(encoding=encoding, errors="replace")
+def _decode_bytes(data: bytes, encoding: str) -> str:
+    if encoding and encoding.lower() != "auto":
+        return data.decode(encoding, errors="replace")
+
+    for bom, enc in (
+        (codecs.BOM_UTF8, "utf-8-sig"),
+        (codecs.BOM_UTF16_LE, "utf-16"),
+        (codecs.BOM_UTF16_BE, "utf-16"),
+        (codecs.BOM_UTF32_LE, "utf-32"),
+        (codecs.BOM_UTF32_BE, "utf-32"),
+    ):
+        if data.startswith(bom):
+            return data.decode(enc, errors="replace")
+
+    if b"\x00" in data[:4096]:
+        try:
+            return data.decode("utf-16", errors="replace")
+        except UnicodeError:
+            pass
+
+    return data.decode("utf-8-sig", errors="replace")
+
+
+def load_srt(path: str, encoding: str = "auto") -> List[SubtitleSegment]:
+    raw = Path(path).read_bytes()
+    data = _decode_bytes(raw, encoding)
     blocks = re.split(r"\n\s*\n", data.strip(), flags=re.MULTILINE)
     segments: List[SubtitleSegment] = []
     for block in blocks:
