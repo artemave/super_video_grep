@@ -6,7 +6,13 @@ from pathlib import Path
 from typing import List
 
 from .asr import build_model, transcribe
-from .ffmpeg import concat_clips, cut_clips, ensure_ffmpeg, extract_audio_segment
+from .ffmpeg import (
+    concat_clips,
+    cut_clips,
+    ensure_ffmpeg,
+    extract_audio_segment,
+    extract_subtitles,
+)
 from .segments import find_any_phrase_matches, normalize_query, pad_and_merge
 from .subtitles import load_srt, match_subtitle_segments
 
@@ -32,8 +38,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--subtitles",
+        action="append",
+        default=[],
+        help="path to subtitle file (SRT) for matching; one per input",
+    )
+    parser.add_argument(
+        "--subtitles-from-media",
+        action="store_true",
+        help="extract subtitles from the input media file",
+    )
+    parser.add_argument(
+        "--subtitle-language",
         default=None,
-        help="path to subtitle file (SRT) for matching",
+        help="subtitle language tag to extract (e.g., eng)",
     )
     parser.add_argument(
         "--subtitle-encoding",
@@ -81,11 +98,14 @@ def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
 
-    if not args.subtitles:
-        print("--subtitles is required", file=sys.stderr)
+    if args.subtitles and args.subtitles_from_media:
+        print("use either --subtitles or --subtitles-from-media, not both", file=sys.stderr)
         return 2
-    if len(args.inputs) != 1:
-        print("only one input is supported when using subtitles", file=sys.stderr)
+    if not args.subtitles and not args.subtitles_from_media:
+        print("either --subtitles or --subtitles-from-media is required", file=sys.stderr)
+        return 2
+    if args.subtitles and len(args.subtitles) != len(args.inputs):
+        print("--subtitles must be provided once per input file", file=sys.stderr)
         return 2
 
     query_strings = list(args.search or [])
@@ -114,12 +134,27 @@ def main() -> int:
     total_concat = 0.0
     run_start = time.perf_counter()
 
+    counter_index = 0
     with tempfile.TemporaryDirectory() as tmpdir:
         for idx, input_path in enumerate(args.inputs, start=1):
             input_path = str(Path(input_path))
             raw_matches = []
+            srt_path = None
+            if args.subtitles_from_media:
+                srt_path = str(Path(tmpdir) / f"embedded_{idx:03d}.srt")
+                try:
+                    extract_subtitles(
+                        input_path,
+                        srt_path,
+                        language=args.subtitle_language,
+                    )
+                except RuntimeError as exc:
+                    print(f"failed to extract subtitles: {exc}", file=sys.stderr)
+                    return 1
+            else:
+                srt_path = args.subtitles[idx - 1]
             try:
-                subs = load_srt(args.subtitles, encoding=args.subtitle_encoding)
+                subs = load_srt(srt_path, encoding=args.subtitle_encoding)
             except OSError as exc:
                 print(f"failed to read subtitles: {exc}", file=sys.stderr)
                 return 1
@@ -187,11 +222,13 @@ def main() -> int:
 
             prefix = f"clip_{idx:03d}"
             cut_start = time.perf_counter()
-            counter_total = len(segments) if args.counter else None
-            clips = cut_clips(input_path, segments, tmpdir, prefix, counter_total)
+            counter_start = counter_index if args.counter else None
+            clips = cut_clips(input_path, segments, tmpdir, prefix, counter_start)
             cut_end = time.perf_counter()
             total_cut += cut_end - cut_start
             all_clips.extend(clips)
+            if args.counter:
+                counter_index += len(clips)
 
         if args.print_segments:
             return 0
